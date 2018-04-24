@@ -1,0 +1,14 @@
+App\Model\TrackedImage:
+  type: entity
+  table: app_tracked_image
+  id:
+    id:
+      type: integer
+      generator: { strategy: AUTO }
+  fields:
+    source:
+      type: string
+      nullable: false
+    hash:
+      type: string
+      nullable: false
