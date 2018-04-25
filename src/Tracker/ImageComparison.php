@@ -13,23 +13,23 @@ use App\Model\TrackedImageInterface;
 class ImageComparison implements ImageComparisonInterface
 {
     /**
-     * @var TrackedImageInterface
+     * @var TrackedImageInterface $originImage
      */
     private $originImage;
 
     /**
-     * @var TrackedImageInterface
+     * @var TrackedImageInterface $savedImage
      */
     private $savedImage;
 
     /**
      * ImageComparison constructor.
-     * @param TrackedImageInterface $originImage
-     * @param TrackedImageInterface $savedImage
+     * @param TrackedImageInterface|null $originImage
+     * @param TrackedImageInterface|null $savedImage
      */
     public function __construct(
-        TrackedImageInterface $originImage,
-        TrackedImageInterface $savedImage
+        ?TrackedImageInterface $originImage,
+        ?TrackedImageInterface $savedImage
     ) {
         $this->originImage = $originImage;
         $this->savedImage = $savedImage;
@@ -38,9 +38,19 @@ class ImageComparison implements ImageComparisonInterface
     /**
      * @inheritdoc
      */
-    public function getComparedImage(): TrackedImageInterface
+    public function getComparedImage(): ?TrackedImageInterface
     {
-        return $this->originImage;
+        return $this->originImage ?: $this->savedImage;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isNotFound(): bool
+    {
+        return
+            null === $this->originImage &&
+            null === $this->savedImage;
     }
 
     /**
@@ -48,6 +58,19 @@ class ImageComparison implements ImageComparisonInterface
      */
     public function isNeverTracked(): bool
     {
+        return
+            null !== $this->originImage &&
+            null === $this->savedImage;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isDropped(): bool
+    {
+        return
+            null === $this->originImage &&
+            null !== $this->savedImage;
     }
 
     /**
@@ -55,6 +78,10 @@ class ImageComparison implements ImageComparisonInterface
      */
     public function isChanged(): bool
     {
+        return
+            null !== $this->originImage &&
+            null !== $this->savedImage &&
+            $this->originImage->getHash() !== $this->savedImage->getHash();
     }
 
     /**
@@ -62,5 +89,9 @@ class ImageComparison implements ImageComparisonInterface
      */
     public function isUnchanged(): bool
     {
+        return
+            null !== $this->originImage &&
+            null !== $this->savedImage &&
+            $this->originImage->getHash() === $this->savedImage->getHash();
     }
 }

@@ -25,3 +25,23 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Tracker\ImageTracker:
+        arguments:
+            $originImageProvider: '@App\Provider\WebStreamImageProvider'
+            $savedImageProvider: '@App\Provider\DoctrineImageProvider'
+
+    App\Provider\DoctrineImageProvider:
+        arguments:
+            $repository: '@App\Repository\TrackedImageRepository'
+
+    App\Repository\TrackedImageRepository:
+        arguments:
+            $entityManager: '@doctrine.orm.default_entity_manager'
+
+    App\EventListener\ImageTrackerListener:
+        arguments:
+            $entityManager: '@doctrine.orm.default_entity_manager'
+        tags:
+            - { name: kernel.event_listener, event: image_tracker.tracked, method: onNeverTracked }
+            - { name: kernel.event_listener, event: image_tracker.tracked, method: onDropped }

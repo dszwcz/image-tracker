@@ -30,11 +30,15 @@ final class WebStreamImageProvider implements ImageProviderInterface
     /**
      * @inheritdoc
      */
-    public function getBySource(string $source): TrackedImageInterface
+    public function getBySource(string $source): ?TrackedImageInterface
     {
-        $stream = file_get_contents($source);
-        $hash = md5($stream);
+        try {
+            $stream = file_get_contents($source);
+            $hash = md5($stream);
 
-        return $this->imageFactory->create($source, $hash);
+            return $this->imageFactory->create($source, $hash);
+        } catch(\Exception $exception) {
+            return null;
+        }
     }
 }

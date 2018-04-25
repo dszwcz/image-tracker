@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Tracker\ImageComparisonInterface;
 use App\Tracker\ImageTrackerInterface;
+use App\Tracker\TrackedImageMessage;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Form\Form;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Twig\Environment;
+use Symfony\Component\Form\Extension\Core\Type\UrlType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * Class HomeController
  * @package App\Controller
  */
-final class HomeController
+final class HomeController extends Controller
 {
-    /**
-     * @var Environment $twig
-     */
-    private $twig;
     /**
      * @var ImageTrackerInterface $tracker
      */
@@ -25,23 +28,50 @@ final class HomeController
 
     /**
      * HomeController constructor.
-     * @param Environment $twig
      * @param ImageTrackerInterface $tracker
      */
-    public function __construct(Environment $twig, ImageTrackerInterface $tracker)
-    {
-        $this->twig = $twig;
+    public function __construct(ImageTrackerInterface $tracker) {
         $this->tracker = $tracker;
     }
 
     /**
      * @return Response
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        $tracker = $this->tracker->track('xyz');
-        $template = $this->twig->render('home/index.html.twig');
+        $message = 'Please enter the image URL for tracking.';
 
-        return new Response($template);
+        $form = $this->createMyForm();
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+
+            /** @var ImageComparisonInterface $trackingComparison */
+            $trackingComparison = $this->tracker->track($data['source']);
+
+            $trackingMessage = new TrackedImageMessage($trackingComparison);
+            $message = $trackingMessage->getMessage();
+
+            $event = new GenericEvent($trackingComparison);
+            $this->get('event_dispatcher')->dispatch('image_tracker.tracked', $event);
+        }
+
+        return $this->render('home/index.html.twig', [
+            'message' => $message,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * @return Form
+     */
+    private function createMyForm(): Form
+    {
+        return $this->createFormBuilder()
+            ->add('source', UrlType::class)
+            ->add('track', SubmitType::class)
+            ->getForm()
+        ;
     }
 }

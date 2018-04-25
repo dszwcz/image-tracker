@@ -13,14 +13,24 @@ use App\Model\TrackedImageInterface;
 interface ImageComparisonInterface
 {
     /**
-     * @return TrackedImageInterface
+     * @return TrackedImageInterface|null
      */
-    public function getComparedImage(): TrackedImageInterface;
+    public function getComparedImage(): ?TrackedImageInterface;
+
+    /**
+     * @return bool
+     */
+    public function isNotFound(): bool;
 
     /**
      * @return bool
      */
     public function isNeverTracked(): bool;
+
+    /**
+     * @return bool
+     */
+    public function isDropped(): bool;
 
     /**
      * @return bool
